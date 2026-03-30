@@ -5,11 +5,13 @@ on:
     branches: [main]
     paths:
       - "sonarqube/**"
+      - "infrastructure/**"
       - ".github/workflows/ci.yml"
   pull_request:
     branches: [main]
     paths:
       - "sonarqube/**"
+      - "infrastructure/**"
       - ".github/workflows/ci.yml"
   workflow_dispatch:
 
@@ -19,7 +21,37 @@ permissions:
   packages: write
 
 jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: truenas-terraform
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.OIDC_ROLE }}
+          role-session-name: GitHubActions-${{ github.run_id }}
+          aws-region: us-east-1
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: infrastructure/terraform
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: infrastructure/terraform
+        run: terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        working-directory: infrastructure/terraform
+        run: terraform apply -auto-approve tfplan
+
   ci:
+    needs: [terraform]
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && 'truenas-deploy' || format('truenas-{0}', github.ref) }}

@@ -59,8 +59,8 @@ jobs:
           compose-file: sonarqube/compose.yaml
           image: ghcr.io/chris-arsenault/sonarqube:${{ github.sha }}
           secrets: |
-            SONAR_DB_USER=/platform/sonarqube/db-user
-            SONAR_DB_PASSWORD=/platform/sonarqube/db-password
+            SONAR_DB_USER=/platform/truenas-db/sonarqube/username
+            SONAR_DB_PASSWORD=/platform/truenas-db/sonarqube/password
             SONAR_ADMIN_PASSCODE=/platform/sonarqube/admin-password
             SONAR_OIDC_ISSUER=/platform/cognito/domain
             SONAR_OIDC_CLIENT_ID=/platform/sonarqube/cognito-client-id

@@ -1,0 +1,83 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sonarqube/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "sonarqube/**"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  packages: write
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.ref == 'refs/heads/main' && 'truenas-deploy' || format('truenas-{0}', github.ref) }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build SonarQube image
+        run: |
+          docker build \
+            -t ghcr.io/chris-arsenault/sonarqube:${{ github.sha }} \
+            -t ghcr.io/chris-arsenault/sonarqube:latest \
+            sonarqube/
+
+      - uses: chris-arsenault/platform/.github/actions/secret-scan@main
+        with:
+          image: ghcr.io/chris-arsenault/sonarqube:${{ github.sha }}
+
+      - name: Push to GHCR
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push ghcr.io/chris-arsenault/sonarqube:${{ github.sha }}
+          docker push ghcr.io/chris-arsenault/sonarqube:latest
+
+      - uses: aws-actions/configure-aws-credentials@v5
+        if: github.ref == 'refs/heads/main'
+        with:
+          role-to-assume: ${{ secrets.OIDC_ROLE }}
+          role-session-name: GitHubActions-${{ github.run_id }}
+          aws-region: us-east-1
+
+      - uses: chris-arsenault/platform/.github/actions/deploy-truenas@main
+        if: github.ref == 'refs/heads/main'
+        with:
+          stack-name: sonarqube
+          compose-file: sonarqube/compose.yaml
+          image: ghcr.io/chris-arsenault/sonarqube:${{ github.sha }}
+          secrets: |
+            SONAR_DB_USER=/platform/sonarqube/db-user
+            SONAR_DB_PASSWORD=/platform/sonarqube/db-password
+            SONAR_ADMIN_PASSCODE=/platform/sonarqube/admin-password
+            SONAR_OIDC_ISSUER=/platform/cognito/domain
+            SONAR_OIDC_CLIENT_ID=/platform/sonarqube/cognito-client-id
+            SONAR_OIDC_CLIENT_SECRET=/platform/sonarqube/cognito-client-secret
+
+  report:
+    if: always()
+    needs: [ci]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.OIDC_ROLE }}
+          role-session-name: GitHubActions-${{ github.run_id }}
+          aws-region: us-east-1
+      - uses: chris-arsenault/platform/.github/actions/report-build@main
+        with:
+          status: ${{ needs.ci.result }}
+          lint-passed: ${{ needs.ci.result == 'success' }}

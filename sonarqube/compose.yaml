@@ -1,6 +1,6 @@
 services:
   sonarqube:
-    image: ghcr.io/chris-arsenault/sonarqube:latest
+    image: ghcr.io/chris-arsenault/sonarqube:[[IMAGE_TAG]]
     container_name: sonarqube
     restart: unless-stopped
     ports:

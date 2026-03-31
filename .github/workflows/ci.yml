@@ -73,8 +73,9 @@ jobs:
         if: github.ref == 'refs/heads/main'
         with:
           stack-name: sonarqube
-          compose-file: sonarqube/compose.yaml
-          image: ghcr.io/chris-arsenault/sonarqube:${{ github.sha }}
+          repo: chris-arsenault/truenas
+          compose-path: sonarqube/compose.yaml
+          image-tag: ${{ github.sha }}
           secrets: |
             SONAR_DB_USER=/platform/truenas-db/sonarqube/username
             SONAR_DB_PASSWORD=/platform/truenas-db/sonarqube/password

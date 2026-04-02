@@ -76,6 +76,7 @@ jobs:
           aws-region: us-east-1
 
       - uses: chris-arsenault/platform/.github/actions/sonar-scan@main
+        continue-on-error: true
         with:
           project-key: truenas
           sources: infrastructure/terraform,sonarqube

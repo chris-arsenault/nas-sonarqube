@@ -16,7 +16,6 @@ services:
       SONAR_AUTH_OIDC_CLIENTSECRET_SECURED: "${SONAR_OIDC_CLIENT_SECRET}"
     volumes:
       - sonarqube_data:/opt/sonarqube/data
-      - sonarqube_extensions:/opt/sonarqube/extensions
       - sonarqube_logs:/opt/sonarqube/logs
     ulimits:
       nofile:
@@ -25,5 +24,4 @@ services:
 
 volumes:
   sonarqube_data:
-  sonarqube_extensions:
   sonarqube_logs:

@@ -70,7 +70,7 @@ async fn create_ci_token(
         .form(&[
             ("login", "admin"),
             ("name", "ci"),
-            ("type", "GLOBAL_ANALYSIS_TOKEN"),
+            ("type", "USER_TOKEN"),
         ])
         .send()
         .await

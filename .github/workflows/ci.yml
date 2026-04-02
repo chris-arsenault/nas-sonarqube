@@ -111,10 +111,11 @@ jobs:
 
           echo "Bootstrapping SonarQube CI token..."
           RESULT_FILE=$(mktemp)
-          aws lambda invoke \
+          AWS_MAX_ATTEMPTS=1 aws lambda invoke \
             --function-name "${FN}" \
             --payload '{"action":"create-ci-token"}' \
             --cli-binary-format raw-in-base64-out \
+            --cli-read-timeout 700 \
             --region "${REGION}" \
             "${RESULT_FILE}" > /dev/null
 

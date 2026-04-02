@@ -47,7 +47,9 @@ services:
         HTTP_CODE=$$(curl -s -o /dev/null -w '%{http_code}' \
           -u admin:admin \
           -X POST "$${API}/users/change_password" \
-          -d "login=admin&previousPassword=admin&password=$${SONAR_ADMIN_PASSWORD}")
+          --data-urlencode "login=admin" \
+          --data-urlencode "previousPassword=admin" \
+          --data-urlencode "password=$${SONAR_ADMIN_PASSWORD}")
         case "$$HTTP_CODE" in
           204) echo "Admin password set from SSM" ;;
           401) echo "Admin password already changed, skipping" ;;

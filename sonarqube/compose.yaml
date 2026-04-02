@@ -11,9 +11,15 @@ services:
       SONAR_JDBC_PASSWORD: "${SONAR_DB_PASSWORD}"
       SONAR_WEB_SYSTEMPASSCODE: "${SONAR_ADMIN_PASSCODE}"
       SONAR_AUTH_OIDC_ENABLED: "true"
-      SONAR_AUTH_OIDC_ISSUERURI: "https://${SONAR_OIDC_ISSUER}"
+      SONAR_AUTH_OIDC_ISSUERURI: "${SONAR_OIDC_ISSUER}"
       SONAR_AUTH_OIDC_CLIENTID_SECURED: "${SONAR_OIDC_CLIENT_ID}"
       SONAR_AUTH_OIDC_CLIENTSECRET_SECURED: "${SONAR_OIDC_CLIENT_SECRET}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/api/system/status | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
     volumes:
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_logs:/opt/sonarqube/logs
@@ -21,6 +27,31 @@ services:
       nofile:
         soft: 131072
         hard: 131072
+
+  bootstrap:
+    image: curlimages/curl:latest
+    depends_on:
+      sonarqube:
+        condition: service_healthy
+    restart: "no"
+    environment:
+      SONAR_ADMIN_PASSCODE: "${SONAR_ADMIN_PASSCODE}"
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        # Change default admin password (idempotent — fails silently if already changed)
+        NEW_PASS=$$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 32)
+        HTTP_CODE=$$(curl -sf -o /dev/null -w '%{http_code}' \
+          -X POST "http://sonarqube:9000/api/users/change_password" \
+          -H "X-Sonar-Passcode: $${SONAR_ADMIN_PASSCODE}" \
+          -d "login=admin&previousPassword=admin&password=$${NEW_PASS}")
+        if [ "$$HTTP_CODE" = "204" ]; then
+          echo "Admin password changed successfully"
+        elif [ "$$HTTP_CODE" = "401" ]; then
+          echo "Admin password already changed, skipping"
+        else
+          echo "Unexpected response: $$HTTP_CODE"
+        fi
 
 volumes:
   sonarqube_data:

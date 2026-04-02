@@ -36,21 +36,24 @@ services:
     restart: "no"
     environment:
       SONAR_ADMIN_PASSCODE: "${SONAR_ADMIN_PASSCODE}"
+      SONAR_ADMIN_PASSWORD: "${SONAR_ADMIN_PASSWORD}"
     entrypoint: ["sh", "-c"]
     command:
       - |
-        # Change default admin password (idempotent — fails silently if already changed)
-        NEW_PASS=$$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 32)
+        API="http://sonarqube:9000/api"
+
+        # Change default admin password to the SSM-managed password
         HTTP_CODE=$$(curl -sf -o /dev/null -w '%{http_code}' \
-          -X POST "http://sonarqube:9000/api/users/change_password" \
+          -X POST "$${API}/users/change_password" \
           -H "X-Sonar-Passcode: $${SONAR_ADMIN_PASSCODE}" \
-          -d "login=admin&previousPassword=admin&password=$${NEW_PASS}")
+          -d "login=admin&previousPassword=admin&password=$${SONAR_ADMIN_PASSWORD}")
         if [ "$$HTTP_CODE" = "204" ]; then
-          echo "Admin password changed successfully"
+          echo "Admin password set from SSM"
         elif [ "$$HTTP_CODE" = "401" ]; then
           echo "Admin password already changed, skipping"
         else
-          echo "Unexpected response: $$HTTP_CODE"
+          echo "WARNING: Admin password change returned HTTP $$HTTP_CODE"
+          exit 1
         fi
 
 volumes:

@@ -44,18 +44,15 @@ services:
         API="http://sonarqube:9000/api"
 
         # Change default admin password to the SSM-managed password
-        HTTP_CODE=$$(curl -sf -o /dev/null -w '%{http_code}' \
+        HTTP_CODE=$$(curl -s -o /dev/null -w '%{http_code}' \
           -X POST "$${API}/users/change_password" \
           -H "X-Sonar-Passcode: $${SONAR_ADMIN_PASSCODE}" \
           -d "login=admin&previousPassword=admin&password=$${SONAR_ADMIN_PASSWORD}")
-        if [ "$$HTTP_CODE" = "204" ]; then
-          echo "Admin password set from SSM"
-        elif [ "$$HTTP_CODE" = "401" ]; then
-          echo "Admin password already changed, skipping"
-        else
-          echo "WARNING: Admin password change returned HTTP $$HTTP_CODE"
-          exit 1
-        fi
+        case "$$HTTP_CODE" in
+          204) echo "Admin password set from SSM" ;;
+          401) echo "Admin password already changed, skipping" ;;
+          *)   echo "WARNING: Admin password change returned HTTP $$HTTP_CODE"; exit 1 ;;
+        esac
 
 volumes:
   sonarqube_data:

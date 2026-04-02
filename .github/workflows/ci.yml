@@ -20,6 +20,9 @@ permissions:
   contents: read
   packages: write
 
+env:
+  CARGO_HOME: /home/runner/.cargo
+
 jobs:
   ci:
     runs-on: ubuntu-latest
@@ -32,13 +35,37 @@ jobs:
           fetch-depth: 0
       - uses: hashicorp/setup-terraform@v4
 
+      - name: Rust version key
+        id: rust
+        run: echo "cachekey=$(rustc --version | sha256sum | head -c12)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Rust
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            sonarqube/bootstrap/target
+          key: rust-${{ steps.rust.outputs.cachekey }}-${{ hashFiles('sonarqube/bootstrap/Cargo.lock') }}
+          restore-keys: rust-${{ steps.rust.outputs.cachekey }}-
+
       - name: Terraform fmt
         run: terraform fmt -check -recursive infrastructure/terraform/
 
+      - name: Clippy
+        working-directory: sonarqube/bootstrap
+        run: cargo clippy -- -D warnings
+
+      - name: Rustfmt
+        working-directory: sonarqube/bootstrap
+        run: cargo fmt -- --check
+
       - name: Install cargo-lambda
+        if: github.ref == 'refs/heads/main'
         run: pip3 install cargo-lambda
 
       - name: Build bootstrap Lambda
+        if: github.ref == 'refs/heads/main'
         working-directory: sonarqube/bootstrap
         run: cargo lambda build --release
 

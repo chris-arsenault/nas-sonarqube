@@ -56,12 +56,16 @@ async fn create_ci_token(
     admin_password: &str,
 ) -> Result<String, String> {
     // Revoke existing CI token (ignore errors)
-    let _ = http
+    let revoke_resp = http
         .post(format!("{base_url}/api/user_tokens/revoke"))
         .basic_auth("admin", Some(admin_password))
         .form(&[("login", "admin"), ("name", "ci")])
         .send()
         .await;
+    match &revoke_resp {
+        Ok(r) => info!(status = %r.status(), "Revoke existing token"),
+        Err(e) => info!(error = %e, "Revoke request failed (continuing)"),
+    }
 
     // Generate new token
     let resp = http
@@ -77,6 +81,14 @@ async fn create_ci_token(
         .json()
         .await
         .map_err(|e| format!("Failed to parse token response: {e}"))?;
+
+    info!(
+        status = %status,
+        token_type = body.get("type").and_then(|t| t.as_str()).unwrap_or("missing"),
+        token_name = body.get("name").and_then(|t| t.as_str()).unwrap_or("missing"),
+        login = body.get("login").and_then(|t| t.as_str()).unwrap_or("missing"),
+        "Token generate response"
+    );
 
     if !status.is_success() {
         return Err(format!("Token API returned {status}: {body}"));

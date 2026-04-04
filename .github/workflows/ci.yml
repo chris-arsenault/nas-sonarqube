@@ -127,15 +127,15 @@ jobs:
             SONAR_OIDC_CLIENT_ID=/platform/sonarqube/cognito-client-id
             SONAR_OIDC_CLIENT_SECRET=/platform/sonarqube/cognito-client-secret
 
-      - name: Bootstrap SonarQube CI token
+      - name: Create SonarQube CI token
         if: github.ref == 'refs/heads/main'
         run: |
           set -euo pipefail
           REGION="us-east-1"
-          FN=$(aws ssm get-parameter --name /platform/sonarqube/bootstrap-function-name \
+          FN=$(aws ssm get-parameter --name /platform/sonarqube/ci-token-function-name \
             --query Parameter.Value --output text --region "${REGION}")
 
-          echo "Bootstrapping SonarQube CI token..."
+          echo "Creating SonarQube CI token..."
           RESULT_FILE=$(mktemp)
           AWS_MAX_ATTEMPTS=1 aws lambda invoke \
             --function-name "${FN}" \
@@ -150,7 +150,7 @@ jobs:
           if echo "${RESULT}" | grep -q '"success":true'; then
             echo "CI token created and stored in SSM"
           else
-            echo "::error::SonarQube bootstrap failed"
+            echo "::error::SonarQube CI token creation failed"
             echo "${RESULT}" | python3 -m json.tool 2>/dev/null || echo "${RESULT}"
             exit 1
           fi

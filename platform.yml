@@ -3,3 +3,4 @@ prefix: sonarqube
 stack:
   - rust
   - terraform
+truenas: true

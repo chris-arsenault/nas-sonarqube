@@ -38,7 +38,7 @@ data "aws_iam_policy_document" "lambda_assume" {
 
 data "archive_file" "sonarqube_ci_token" {
   type        = "zip"
-  source_file = "${path.module}/../../sonarqube/bootstrap/target/lambda/sonarqube-ci-token/bootstrap"
+  source_file = "${path.module}/../../backend/target/lambda/sonarqube-ci-token/bootstrap"
   output_path = "${path.module}/sonarqube-ci-token-lambda.zip"
 }
 

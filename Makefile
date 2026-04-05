@@ -3,10 +3,10 @@
 ci: lint fmt terraform-fmt-check
 
 lint:
-	cd sonarqube/bootstrap && cargo clippy -- -D warnings
+	cd backend && cargo clippy -- -D warnings
 
 fmt:
-	cd sonarqube/bootstrap && cargo fmt -- --check
+	cd backend && cargo fmt -- --check
 
 terraform-fmt-check:
 	terraform fmt -check -recursive infrastructure/terraform/

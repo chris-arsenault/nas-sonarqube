@@ -4,19 +4,8 @@
 # Creates a SonarQube USER_TOKEN for CI analysis and stores it in SSM.
 # Waits for SonarQube health, revokes any existing token, generates a new one.
 #
-# Runs in VPC to reach SonarQube at 192.168.66.3:30090 via WireGuard VPN.
+# Runs in VPC with VPN access to reach SonarQube at 192.168.66.3:30090.
 # =============================================================================
-
-data "aws_security_group" "sonar_proxy" {
-  filter {
-    name   = "tag:sg:role"
-    values = ["reverse-proxy"]
-  }
-  filter {
-    name   = "tag:sg:scope"
-    values = ["sonar.ahara.io"]
-  }
-}
 
 resource "aws_iam_role" "sonarqube_ci_token" {
   name = "${local.prefix}-ci-token"
@@ -61,14 +50,12 @@ resource "aws_iam_role_policy" "sonarqube_ci_token_ssm" {
 }
 
 module "sonarqube_ci_token" {
-  source             = "git::https://github.com/chris-arsenault/ahara-tf-patterns.git//modules/lambda"
-  name               = "${local.prefix}-ci-token"
-  binary             = "${path.module}/../../backend/target/lambda/sonarqube-ci-token/bootstrap"
-  role_arn           = aws_iam_role.sonarqube_ci_token.arn
-  timeout            = 660
-  memory             = 128
-  subnet_ids         = module.ctx.private_subnet_ids
-  security_group_ids = [data.aws_security_group.sonar_proxy.id]
+  source     = "git::https://github.com/chris-arsenault/ahara-tf-patterns.git//modules/lambda"
+  name       = "${local.prefix}-ci-token"
+  binary     = "${path.module}/../../backend/target/lambda/sonarqube-ci-token/bootstrap"
+  role_arn   = aws_iam_role.sonarqube_ci_token.arn
+  timeout    = 660
+  vpn_access = true
 
   environment = {
     SONARQUBE_URL = "http://192.168.66.3:30090"

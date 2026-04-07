@@ -1,4 +1,6 @@
 .env
 .DS_Store
 backend/target/
+target/
 .terraform/
+infrastructure/terraform/*.zip

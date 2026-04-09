@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   ci:
-    uses: chris-arsenault/platform/.github/workflows/ci.yml@main
+    uses: chris-arsenault/ahara/.github/workflows/ci.yml@main
     secrets: inherit
 
   bootstrap:
@@ -36,7 +36,7 @@ jobs:
         run: |
           set -euo pipefail
           REGION="us-east-1"
-          FN=$(aws ssm get-parameter --name /platform/sonarqube/ci-token-function-name \
+          FN=$(aws ssm get-parameter --name /ahara/sonarqube/ci-token-function-name \
             --query Parameter.Value --output text --region "${REGION}")
 
           echo "Creating SonarQube CI token..."

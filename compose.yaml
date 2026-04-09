@@ -9,7 +9,7 @@ services:
       SONAR_JDBC_URL: "jdbc:postgresql://192.168.66.3:5432/sonarqube"
       SONAR_JDBC_USERNAME: "${SONAR_DB_USER}"
       SONAR_JDBC_PASSWORD: "${SONAR_DB_PASSWORD}"
-      SONAR_CORE_SERVERBASEURL: "https://sonar.ahara.io"
+      SONAR_CORE_SERVERBASEURL: "https://sonar.services.ahara.io"
       SONAR_AUTH_OIDC_ENABLED: "true"
       SONAR_AUTH_OIDC_LOGINSTRATEGY: "Custom claim"
       SONAR_AUTH_OIDC_LOGINSTRATEGY_CUSTOMCLAIM_NAME: "cognito:username"

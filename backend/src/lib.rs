@@ -114,7 +114,7 @@ pub async fn handler(event: LambdaEvent<serde_json::Value>) -> Result<serde_json
             let base_url =
                 env::var("SONARQUBE_URL").unwrap_or_else(|_| "http://192.168.66.3:30090".into());
             let scanner_password =
-                get_ssm_value(&ssm, "/platform/sonarqube/scanner-password").await?;
+                get_ssm_value(&ssm, "/ahara/sonarqube/scanner-password").await?;
 
             let http = reqwest::Client::new();
 
@@ -123,7 +123,7 @@ pub async fn handler(event: LambdaEvent<serde_json::Value>) -> Result<serde_json
 
             // Write token to SSM
             ssm.put_parameter()
-                .name("/platform/sonarqube/ci-token")
+                .name("/ahara/sonarqube/ci-token")
                 .r#type(aws_sdk_ssm::types::ParameterType::SecureString)
                 .value(&token)
                 .overwrite(true)

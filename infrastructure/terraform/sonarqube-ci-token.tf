@@ -38,12 +38,12 @@ resource "aws_iam_role_policy" "sonarqube_ci_token_ssm" {
       {
         Effect   = "Allow"
         Action   = ["ssm:GetParameter"]
-        Resource = ["arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/platform/sonarqube/scanner-password"]
+        Resource = ["arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/ahara/sonarqube/scanner-password"]
       },
       {
         Effect   = "Allow"
         Action   = ["ssm:PutParameter"]
-        Resource = ["arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/platform/sonarqube/ci-token"]
+        Resource = ["arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/ahara/sonarqube/ci-token"]
       }
     ]
   })
@@ -57,13 +57,15 @@ module "sonarqube_ci_token" {
   timeout    = 660
   vpn_access = true
 
+  vpc = module.ctx.vpc
+
   environment = {
     SONARQUBE_URL = "http://192.168.66.3:30090"
   }
 }
 
 resource "aws_ssm_parameter" "sonarqube_ci_token_function" {
-  name  = "/platform/sonarqube/ci-token-function-name"
+  name  = "/ahara/sonarqube/ci-token-function-name"
   type  = "String"
   value = module.sonarqube_ci_token.function_name
 }

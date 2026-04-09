@@ -6,6 +6,7 @@ module "cognito" {
   source        = "git::https://github.com/chris-arsenault/ahara-tf-patterns.git//modules/cognito-app"
   name          = "sonarqube"
   callback_urls = ["https://${local.sonarqube_domain}/oauth2/callback/oidc"]
+  cognito       = module.ctx.cognito
 }
 
 # =============================================================================
@@ -68,7 +69,7 @@ resource "aws_ssm_parameter" "sonarqube_ci_token" {
 
 # Publish client ID for the auth-trigger client-map to discover
 resource "aws_ssm_parameter" "sonarqube_auth_client_entry" {
-  name  = "/platform/auth-trigger/clients/sonarqube"
+  name  = "/ahara/auth-trigger/clients/sonarqube"
   type  = "String"
   value = module.cognito.client_id
 }
